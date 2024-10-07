@@ -64,7 +64,7 @@ export default function MarkerList({
                 source={{ uri: 'https://cdn-icons-png.flaticon.com/512/854/854878.png' }}
                 style={styles.emptyStateImage}
               />
-              <Text style={styles.emptyStateTitle}>No Markers Yet</Text>
+              <Text style={styles.emptyStateTitle}>No Markers Yet, maybe soon</Text>
               <Text style={styles.emptyStateDescription}>
                 Start by adding your first marker! Tap on the map or use your current location to create a new marker.
               </Text>
