@@ -4,6 +4,7 @@ import { Button, IconButton } from 'react-native-paper';
 import { MarkerData } from '../App';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
+import CategorySelector, { Category, categories } from './CategorySelector';
 
 type AddMarkerModalProps = {
   visible: boolean;
@@ -24,6 +25,9 @@ export default function AddMarkerModal({
   const [description, setDescription] = useState('');
   const [isPublic, setIsPublic] = useState(false);
   const [locationType, setLocationType] = useState('current');
+  const [selectedCategory, setSelectedCategory] = useState<Category>(
+    categories[0]
+  );
 
   useEffect(() => {
     if (selectedLocation) {
@@ -52,11 +56,13 @@ export default function AddMarkerModal({
       title,
       description,
       isPublic,
+      category: selectedCategory,
     };
     onAddMarker(newMarker);
     setTitle('');
     setDescription('');
     setIsPublic(false);
+    setSelectedCategory(categories[0]);
   };
 
   return (
@@ -138,6 +144,10 @@ export default function AddMarkerModal({
               </TouchableOpacity>
             </View>
           </View>
+          <CategorySelector
+            selectedCategory={selectedCategory.id}
+            onSelectCategory={(category) => setSelectedCategory(category)}
+          />
           <Button
             mode='contained'
             onPress={handleAddMarker}
@@ -208,7 +218,7 @@ const styles = StyleSheet.create({
     color: '#333333',
   },
   textArea: {
-    height: 100,
+    // height: 100,
     textAlignVertical: 'top',
   },
   optionContainer: {

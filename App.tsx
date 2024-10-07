@@ -8,6 +8,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AddMarkerModal from './components/AddMarkerModal';
 import MarkerList from './components/MarkerList';
 import ActionButton from './components/ActionButton';
+import { Category } from './components/CategorySelector';
 
 export type MarkerData = {
   id: string;
@@ -18,6 +19,7 @@ export type MarkerData = {
   title: string;
   description: string;
   isPublic: boolean;
+  category: Category
 };
 
 export default function App() {
@@ -145,8 +147,20 @@ export default function App() {
                   coordinate={marker.coordinate}
                   title={marker.title}
                   description={marker.description}
-                  pinColor={marker.isPublic ? 'red' : 'blue'}
-                />
+                >
+                  <View
+                    style={[
+                      styles.markerContainer,
+                      { backgroundColor: marker.category.icon },
+                    ]}
+                  >
+                    <MaterialCommunityIcons
+                      name={marker.category.icon as any}
+                      size={24}
+                      color='white'
+                    />
+                  </View>
+                </Marker>
               ))}
               {userLocation && !isTrackingLocation && (
                 <Marker
@@ -172,11 +186,31 @@ export default function App() {
               icon={isFabOpen ? 'close' : 'plus'}
               visible
               actions={[
-                { icon: 'plus', label: 'Add Marker', onPress: () => setIsAddingMarker(true) },
-                { icon: 'format-list-checkbox', label: 'Marker List', onPress: () => setShowMarkerList(true) },
-                { icon: isTrackingLocation ? 'crosshairs-gps' : 'crosshairs', label: 'Toggle Tracking', onPress: toggleLocationTracking },
-                { icon: 'target', label: 'Center Map', onPress: centerOnUserLocation },
-                { icon: isDarkMode ? 'weather-sunny' : 'weather-night', label: 'Toggle Dark Mode', onPress: toggleDarkMode },
+                {
+                  icon: 'plus',
+                  label: 'Add Marker',
+                  onPress: () => setIsAddingMarker(true),
+                },
+                {
+                  icon: 'format-list-checkbox',
+                  label: 'Marker List',
+                  onPress: () => setShowMarkerList(true),
+                },
+                {
+                  icon: isTrackingLocation ? 'crosshairs-gps' : 'crosshairs',
+                  label: 'Toggle Tracking',
+                  onPress: toggleLocationTracking,
+                },
+                {
+                  icon: 'target',
+                  label: 'Center Map',
+                  onPress: centerOnUserLocation,
+                },
+                {
+                  icon: isDarkMode ? 'weather-sunny' : 'weather-night',
+                  label: 'Toggle Dark Mode',
+                  onPress: toggleDarkMode,
+                },
               ]}
               onStateChange={({ open }) => setIsFabOpen(open)}
               fabStyle={styles.fab}
@@ -215,6 +249,10 @@ const styles = StyleSheet.create({
   },
   fab: {
     backgroundColor: '#4285F4',
+  },
+  markerContainer: {
+    borderRadius: 20,
+    padding: 8,
   },
   userLocationMarker: {
     alignItems: 'center',
