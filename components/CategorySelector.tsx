@@ -6,13 +6,46 @@ export type Category = {
   id: string;
   name: string;
   icon: string;
+  description: string;
+  color: string;
 };
 
 const categories: Category[] = [
-  { id: '1', name: 'Food', icon: 'food' },
-  { id: '2', name: 'Attractions', icon: 'camera' },
-  { id: '3', name: 'Shopping', icon: 'shopping' },
-  { id: '4', name: 'Other', icon: 'map-marker' },
+  { 
+    id: '1', 
+    name: 'Historic', 
+    icon: 'castle', 
+    description: 'Explore historical landmarks and cultural heritage sites',
+    color: '#FF6B6B'
+  },
+  { 
+    id: '2', 
+    name: 'Foodie', 
+    icon: 'food', 
+    description: 'Discover local cuisine and popular eateries',
+    color: '#4ECDC4'
+  },
+  { 
+    id: '3', 
+    name: 'Nature', 
+    icon: 'tree', 
+    description: 'Experience parks, trails, and natural attractions',
+    color: '#45B7D1'
+  },
+  { 
+    id: '4', 
+    name: 'Adventure', 
+    icon: 'hiking', 
+    description: 'Find exciting activities and adventure spots',
+    color: '#96CEB4'
+  },
+  { 
+    id: '5', 
+    name: 'Shopping', 
+    icon: 'shopping', 
+    description: 'Browse local markets and shopping areas',
+    color: '#D4A5A5'
+  }
 ];
 
 type CategorySelectorProps = {

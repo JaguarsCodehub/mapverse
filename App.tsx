@@ -9,6 +9,8 @@ import AddMarkerModal from './components/AddMarkerModal';
 import MarkerList from './components/MarkerList';
 import ActionButton from './components/ActionButton';
 import { Category } from './components/CategorySelector';
+import ThemeSelector from './components/ThemeSelector';
+import RouteManager from './components/RouteManager';
 
 export type MarkerData = {
   id: string;
@@ -19,7 +21,11 @@ export type MarkerData = {
   title: string;
   description: string;
   isPublic: boolean;
-  category: Category
+  category: Category;
+  rating?: number;
+  visitDuration?: number;
+  bestTimeToVisit?: string;
+  cost?: string;
 };
 
 export default function App() {
@@ -36,6 +42,9 @@ export default function App() {
   const mapRef = useRef<MapView>(null);
   const [isFabOpen, setIsFabOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [selectedThemes, setSelectedThemes] = useState<string[]>([]);
+  const [routes, setRoutes] = useState<Array<MarkerData[]>>([]);
+  const [showRouteManager, setShowRouteManager] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -121,65 +130,97 @@ export default function App() {
     setIsDarkMode(!isDarkMode);
   };
 
+  const toggleTheme = (themeId: string) => {
+    setSelectedThemes(prev => 
+      prev.includes(themeId) 
+        ? prev.filter(id => id !== themeId)
+        : [...prev, themeId]
+    );
+  };
+
+  const filteredMarkers = markers.filter(marker => 
+    selectedThemes.length === 0 || selectedThemes.includes(marker.category.id)
+  );
+
+  const handleCreateRoute = (routeMarkers: MarkerData[]) => {
+    setRoutes([...routes, routeMarkers]);
+    setShowRouteManager(false);
+    
+    // Animate map to show all route markers
+    if (mapRef.current && routeMarkers.length > 0) {
+      const coordinates = routeMarkers.map(marker => marker.coordinate);
+      mapRef.current.fitToCoordinates(coordinates, {
+        edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
+        animated: true,
+      });
+    }
+  };
+
   return (
     <PaperProvider>
       <SafeAreaProvider>
         <View style={styles.container}>
           {userLocation && (
-            <MapView
-              ref={mapRef}
-              provider={PROVIDER_GOOGLE}
-              style={styles.map}
-              initialRegion={{
-                latitude: userLocation.coords.latitude,
-                longitude: userLocation.coords.longitude,
-                latitudeDelta: 0.0922,
-                longitudeDelta: 0.0421,
-              }}
-              onPress={handleMapPress}
-              showsUserLocation={isTrackingLocation}
-              followsUserLocation={isTrackingLocation}
-              customMapStyle={mapStyleDark}
-            >
-              {markers.map((marker) => (
-                <Marker
-                  key={marker.id}
-                  coordinate={marker.coordinate}
-                  title={marker.title}
-                  description={marker.description}
-                >
-                  <View
-                    style={[
-                      styles.markerContainer,
-                      { backgroundColor: marker.category.icon },
-                    ]}
+            <>
+              <MapView
+                ref={mapRef}
+                provider={PROVIDER_GOOGLE}
+                style={styles.map}
+                initialRegion={{
+                  latitude: userLocation.coords.latitude,
+                  longitude: userLocation.coords.longitude,
+                  latitudeDelta: 0.0922,
+                  longitudeDelta: 0.0421,
+                }}
+                onPress={handleMapPress}
+                showsUserLocation={isTrackingLocation}
+                followsUserLocation={isTrackingLocation}
+                customMapStyle={mapStyleDark}
+              >
+                {filteredMarkers.map((marker) => (
+                  <Marker
+                    key={marker.id}
+                    coordinate={marker.coordinate}
+                    title={marker.title}
+                    description={marker.description}
                   >
-                    <MaterialCommunityIcons
-                      name={marker.category.icon as any}
-                      size={24}
-                      color='white'
-                    />
-                  </View>
-                </Marker>
-              ))}
-              {userLocation && !isTrackingLocation && (
-                <Marker
-                  coordinate={{
-                    latitude: userLocation.coords.latitude,
-                    longitude: userLocation.coords.longitude,
-                  }}
-                >
-                  <View style={styles.userLocationMarker}>
-                    <MaterialCommunityIcons
-                      name='square-rounded'
-                      size={24}
-                      color='#4285F4'
-                    />
-                  </View>
-                </Marker>
-              )}
-            </MapView>
+                    <View
+                      style={[
+                        styles.markerContainer,
+                        { backgroundColor: marker.category.icon },
+                      ]}
+                    >
+                      <MaterialCommunityIcons
+                        name={marker.category.icon as any}
+                        size={24}
+                        color='white'
+                      />
+                    </View>
+                  </Marker>
+                ))}
+                {userLocation && !isTrackingLocation && (
+                  <Marker
+                    coordinate={{
+                      latitude: userLocation.coords.latitude,
+                      longitude: userLocation.coords.longitude,
+                    }}
+                  >
+                    <View style={styles.userLocationMarker}>
+                      <MaterialCommunityIcons
+                        name='square-rounded'
+                        size={24}
+                        color='#4285F4'
+                      />
+                    </View>
+                  </Marker>
+                )}
+              </MapView>
+            </>
           )}
+          <ThemeSelector
+            selectedThemes={selectedThemes}
+            onThemeToggle={toggleTheme}
+          />
           <Portal>
             <FAB.Group
               open={isFabOpen}
@@ -211,6 +252,11 @@ export default function App() {
                   label: 'Toggle Dark Mode',
                   onPress: toggleDarkMode,
                 },
+                {
+                  icon: 'car',
+                  label: 'Create Route',
+                  onPress: () => setShowRouteManager(true),
+                },
               ]}
               onStateChange={({ open }) => setIsFabOpen(open)}
               fabStyle={styles.fab}
@@ -231,6 +277,13 @@ export default function App() {
             onClose={() => setShowMarkerList(false)}
             markers={markers}
             onToggleVisibility={toggleMarkerVisibility}
+          />
+          <RouteManager
+            visible={showRouteManager}
+            onClose={() => setShowRouteManager(false)}
+            markers={markers}
+            selectedThemes={selectedThemes}
+            onCreateRoute={handleCreateRoute}
           />
         </View>
       </SafeAreaProvider>
