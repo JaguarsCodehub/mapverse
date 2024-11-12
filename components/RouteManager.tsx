@@ -4,6 +4,18 @@ import { List, IconButton, Button } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { MarkerData } from '../App';
 
+type RouteInfo = {
+  markers: MarkerData[];
+  polyline: string;
+  duration: number;
+  distance: number;
+  steps: Array<{
+    instruction: string;
+    distance: string;
+    duration: string;
+  }>;
+};
+
 type RouteManagerProps = {
   visible: boolean;
   onClose: () => void;
@@ -63,9 +75,15 @@ export default function RouteManager({
     }
   };
 
-  const handleCreateRoute = () => {
-    onCreateRoute(selectedMarkers);
-    setSelectedMarkers([]);
+  const handleCreateRoute = async () => {
+    try {
+      const routeInfo = await fetchDirections(selectedMarkers);
+      onCreateRoute(selectedMarkers); // Corrected to pass selectedMarkers directly
+      setSelectedMarkers([]);
+    } catch (error) {
+      // Add error handling UI
+      console.error('Error creating route:', error);
+    }
   };
 
   return (
@@ -243,3 +261,43 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
+
+const fetchDirections = async (markers: MarkerData[]): Promise<RouteInfo> => {
+  const origin = markers[0].coordinate;
+  const destination = markers[markers.length - 1].coordinate;
+  const waypoints = markers.slice(1, -1).map(marker => 
+    `${marker.coordinate.latitude},${marker.coordinate.longitude}`
+  ).join('|');
+
+  const apiKey = 'YOUR_GOOGLE_API_KEY'; // Replace with your API key
+  const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin.latitude},${origin.longitude}&destination=${destination.latitude},${destination.longitude}${waypoints ? `&waypoints=${waypoints}` : ''}&key=${apiKey}`;
+
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    if (data.routes.length === 0) {
+      throw new Error('No route found');
+    }
+
+    const route = data.routes[0];
+    const legs = route.legs;
+    
+    return {
+      markers,
+      polyline: route.overview_polyline.points,
+      duration: legs.reduce((total: number, leg: any) => total + leg.duration.value, 0),
+      distance: legs.reduce((total: number, leg: any) => total + leg.distance.value, 0),
+      steps: legs.flatMap((leg: any) => 
+        leg.steps.map((step: any) => ({
+          instruction: step.html_instructions,
+          distance: step.distance.text,
+          duration: step.duration.text,
+        }))
+      ),
+    };
+  } catch (error) {
+    console.error('Error fetching directions:', error);
+    throw error;
+  }
+};
